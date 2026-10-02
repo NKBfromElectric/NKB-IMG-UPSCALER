@@ -10,7 +10,7 @@ function freeResult(item){if(item.result)URL.revokeObjectURL(item.result.url);it
 function freeZip(){if(zipUrl)URL.revokeObjectURL(zipUrl);zipUrl=null;$('download-all').hidden=true;}
 function dispose(){freeZip();items.forEach(item=>{freeResult(item);URL.revokeObjectURL(item.url);});}
 function syncScaleButtons(){const value=Number($('scale-number').value);$('scale-minus').disabled=busy||loading||value<=2;$('scale-plus').disabled=busy||loading||value>=10;}
-function lock(){document.querySelectorAll('.controls input,.controls select,.presets button,.scale-step-button,#replace,#file,#clear,#add,#demo').forEach(e=>e.disabled=busy||loading);$('cancel').hidden=!busy;syncScaleButtons();}
+function lock(){document.querySelectorAll('.controls input,.controls select,.presets button,.scale-step-button,#replace,#file,#clear,#add').forEach(e=>e.disabled=busy||loading);$('cancel').hidden=!busy;syncScaleButtons();}
 function renderList(){
  $('queue').replaceChildren();items.forEach((item,index)=>{const b=document.createElement('button');b.type='button';b.className='queue-item';b.setAttribute('aria-pressed',String(index===active));const name=document.createElement('span'),state=document.createElement('small');name.textContent=item.file.name;state.textContent=item.result?'完成':item.error?'エラー':'待機';b.append(name,state);b.addEventListener('click',()=>{active=index;render();});$('queue').append(b);});$('queue').hidden=items.length<2;$('queue-count').textContent=items.length?`${items.length}枚 / 最大10枚`:'';
 }
@@ -23,7 +23,7 @@ function setPreview(element,url){
  if(element.complete&&element.naturalWidth)element.style.visibility='visible';
 }
 function render(){
- const item=current();renderList();$('demo').hidden=!!item;$('dropzone').hidden=!!item;$('image-stage').hidden=!item;['replace','clear','add'].forEach(id=>$(id).hidden=!item);$('download').hidden=!item?.result;$('comparison-tools').hidden=!item?.result;
+ const item=current();renderList();$('dropzone').hidden=!!item;$('image-stage').hidden=!item;['replace','clear','add'].forEach(id=>$(id).hidden=!item);$('download').hidden=!item?.result;$('comparison-tools').hidden=!item?.result;
  if(!item){$('filename').textContent='まだ選択されていません';$('source-size').textContent='— × —';$('output-size').textContent='— × —';$('file-kind').textContent='JPG / PNG';$('preview').removeAttribute('src');$('before').removeAttribute('src');return;}
  $('filename').textContent=item.file.name;$('filename').title=item.file.name;$('source-size').textContent=`${item.width.toLocaleString()} × ${item.height.toLocaleString()} px`;$('file-kind').textContent=item.kind;
  setPreview($('preview'),item.result?.url||item.url);setPreview($('before'),item.url);$('preview-badge').textContent=item.result?`拡大後 · ${item.result.scale}×`:'元画像';
@@ -75,5 +75,4 @@ $('process').addEventListener('click',async()=>{
 $('download-all').addEventListener('click',async()=>{
  if(busy||loading)return;loading=true;lock();$('process').disabled=true;$('download-all').disabled=true;try{if(!zipUrl){const entries=items.filter(i=>i.result).map((i,index)=>({blob:i.result.blob,name:`${String(index+1).padStart(2,'0')}_${i.result.name}`}));zipUrl=URL.createObjectURL(await makeZip(entries));}const a=document.createElement('a');a.href=zipUrl;a.download='NKB-IMG-UPSCALER.zip';a.click();}catch{status('ZIPを作成できませんでした。各画像を個別に保存してください。',true);}finally{loading=false;lock();$('process').disabled=false;$('download-all').disabled=false;}
 });
-$('demo').addEventListener('click',()=>{if(items.length||busy||loading)return;const sampleToken=++selectionGeneration;const c=document.createElement('canvas');c.width=320;c.height=220;const ctx=c.getContext('2d');ctx.fillStyle='#173f35';ctx.fillRect(0,0,320,220);ctx.fillStyle='#daeeae';ctx.beginPath();ctx.arc(233,66,34,0,Math.PI*2);ctx.fill();ctx.fillStyle='#7b9d81';ctx.beginPath();ctx.moveTo(0,220);ctx.lineTo(110,70);ctx.lineTo(240,220);ctx.fill();ctx.fillStyle='#eff3dd';ctx.beginPath();ctx.moveTo(75,220);ctx.lineTo(212,103);ctx.lineTo(320,220);ctx.fill();c.toBlob(blob=>{if(blob&&sampleToken===selectionGeneration&&!items.length&&!busy&&!loading)addFiles([new File([blob],'sample-landscape.png',{type:'image/png'})]);},'image/png');});
 syncScaleButtons();window.addEventListener('pagehide',e=>{if(!e.persisted)dispose();});
