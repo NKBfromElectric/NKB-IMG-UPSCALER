@@ -1,46 +1,37 @@
 # NKB-IMG-UPSCALER
 
-JPG・PNGを2〜10倍（0.1刻み）に拡大する日本語Webアプリ。ブラウザのCanvasで補間処理し、画像はサーバーに送信しません。AI超解像ではありません。
+JPG・PNGを2〜10倍（0.1刻み）に拡大する無料のブラウザツール。画像は端末内で処理し、サーバーには送信しません。AI超解像ではなく高品質な補間処理です。
 
-- ファイル選択、ドラッグ＆ドロップ、出力プレビューとダウンロード
-- − / ＋ボタンで0.1倍ずつ調整（2〜10倍）、数値・スライダー・プリセットと連動
-- PNG透明背景、JPG画質50〜100%（透明部分は白）
-- pica 10.0.3 の Magic Kernel Sharp（mks2013）による高品質補間／ピクセルアート用の最近傍拡大
-- JPGの初期画質98%。PNGでは透明度を維持、JPGの白背景への変換は補間後に実施
-- 高品質フィルターはアプリに同梱し、画像データは端末内だけで処理
-- 入力30 MB、出力4,000万画素・各辺16,384pxの上限
+公開: https://nkb-img-upscaler.que-band-2025.workers.dev/
 
-公開URL: https://nkb-img-upscaler.que-band-2025.workers.dev/
+## 機能
 
-## ローカル
+- 最大10枚の一括処理、個別保存、UTF-8対応ZIP保存
+- − / ＋・数値入力・スライダー・倍率プリセット
+- PNG透明背景、JPG画質50〜100%、白背景への変換
+- pica 10.0.3 Magic Kernel Sharp、選べる輪郭補正、ドット絵向け最近傍補間
+- 同じ表示サイズの比較スライダー、100%表示・スクロール
+- 処理の枚数表示、現在の画像の完了後に停止
+- サンプル画像、使い方、FAQ、プライバシー・利用案内
+- 外部フォント・解析・広告なし。CSPなどの防御ヘッダー
+- 実ファイルのPNG/JPGヘッダーから読み込み前に寸法を検査
 
-Node.js 22以降で `npm run dev`。 http://127.0.0.1:4173 を開きます。 `npm test` で寸法計算・上限の検証。
+## 上限と限界
 
-## Cloudflare Workersへ公開
+1枚30 MB・最大10枚・元ファイル合計150 MB。入力と出力は各4,000万画素・各辺16,384pxまで、出力合計1億画素まで。端末のメモリによって制限内でも失敗する場合があります。画像のEXIF、GPS、色プロファイル、アニメーションは引き継ぎません。入力元に存在しない細部や読めない文字を復元する機能はありません。
 
-```
-npm install
-npx wrangler login
-npm run deploy
-```
+## 開発と公開
 
-`wrangler.jsonc` の名前は `nkb-img-upscaler`。公式の静的アセット機能で `public/` のみを配信します。
-https://developers.cloudflare.com/workers/static-assets/
+Node.js 22以降で `npm ci`、`npm run dev`。http://127.0.0.1:4173 を開きます。`npm test` で倍率・ファイル検査・ZIP構造を検証します。
 
-## GitHub
+Cloudflare Workers静的アセット機能でpublic/だけを配信します。`npx wrangler login` の後 `npm run deploy`。またはpublic/の内容をZIP化し、Workerの「新しいデプロイ」で完全なコンテンツとしてアップロードします。`_headers` を必ず含めてください。
 
-NKBfromElectric/NKB-IMG-UPSCALER の新規リポジトリを作成後、このフォルダで実行します。
+公開後はPNG/JPGのダウンロード、比較、ZIP、セキュリティヘッダーを確認します。画像処理ライブラリは同梱しているため外部CDNへの画像送信はありません。
 
-```
-git init -b main
-git add .
-git commit -m "Create browser image upscaler"
-git remote add origin https://github.com/NKBfromElectric/NKB-IMG-UPSCALER.git
-git push -u origin main
-```
+## 収益化
 
-スマートフォンはメモリやCanvasの制限により、上限以内でも失敗することがあります。倍率を下げてください。画像の細部を復元する機能はありません。UIフォントはGoogle Fontsを利用します。
+現時点では無料・広告なし・支援リンクなし。導入候補と判断条件は [MONETIZATION.md](MONETIZATION.md) に記載。広告の導入時にはCSP・プライバシー説明・同意管理・ads.txtを実際のサービス設定に合わせて更新してください。決済秘密鍵はpublic/やリポジトリに置かないでください。
 
 ## 依存ライブラリ
 
-[pica](https://github.com/nodeca/pica) 10.0.3（MIT）。配布用ESMとライセンスを public/vendor/ に同梱しています。フィルターは元画像に存在しない細部を復元する機能ではありません。
+[pica](https://github.com/nodeca/pica) 10.0.3（MIT）。配布ESMとライセンスをpublic/vendor/に同梱。ZIPはアプリ内実装で、既に圧縮された画像をSTORE形式で格納します。

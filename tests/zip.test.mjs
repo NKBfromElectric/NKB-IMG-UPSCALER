@@ -1,0 +1,4 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {makeZip} from '../public/zip.js';
+test('ZIP stores UTF8 names, payload and CRC with valid directory offsets',async()=>{const blob=await makeZip([{name:'01_画像.png',blob:new Blob(['123456789'])},{name:'02_photo.jpg',blob:new Blob(['test'])}]);const bytes=new Uint8Array(await blob.arrayBuffer()),v=new DataView(bytes.buffer);assert.equal(v.getUint32(0,true),0x04034b50);assert.equal(v.getUint32(14,true),0xcbf43926);assert.equal(v.getUint16(6,true),0x800);const end=bytes.length-22;assert.equal(v.getUint32(end,true),0x06054b50);assert.equal(v.getUint16(end+10,true),2);const central=v.getUint32(end+16,true);assert.equal(v.getUint32(central,true),0x02014b50);assert.equal(v.getUint32(central+42,true),0);assert.equal(central+v.getUint32(end+12,true),end);});
