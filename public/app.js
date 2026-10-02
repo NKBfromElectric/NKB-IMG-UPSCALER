@@ -1,11 +1,11 @@
-import {createCropEditor} from './crop.js?v=20261002-6';
+import {createCropEditor} from './crop.js?v=20261002-7';
 import {dimensions,stepScale} from './geometry.js';
 import {resizeImage} from './resize.js';
 import {inspectImage} from './input.js';
 import {makeZip} from './zip.js';
-import {createAudioConverter} from './audio.js?v=20261002-6';
+import {createAudioConverter} from './audio.js?v=20261002-7';
 const $=id=>document.getElementById(id);
-let items=[],active=0,busy=false,loading=false,stop=false,zipUrl=null,selectionGeneration=0,mode='upscale',cropProcessing=false;
+let items=[],active=0,busy=false,loading=false,stop=false,zipUrl=null,selectionGeneration=0,mode='upscale',lastImageMode='upscale',cropProcessing=false;
 const current=()=>items[active];
 const audioConverter=createAudioConverter();
 const modes=['upscale','crop','audio'];
@@ -13,19 +13,26 @@ const cropEditor=createCropEditor({getItem:current,isLocked:()=>busy||loading||c
 function setMode(next){
  if(busy||loading||cropProcessing||audioConverter.isBusy())return;mode=next;
  for(const name of modes){const selected=name===mode;$('tab-'+name).setAttribute('aria-selected',String(selected));$('tab-'+name).tabIndex=selected?0:-1;$(name+'-panel').hidden=!selected;}
- $('workspace').hidden=mode==='audio';
+ const video=mode==='audio';if(!video)lastImageMode=mode;
+ $('image-tools').hidden=video;$('video-tools').hidden=!video;
+ for(const kind of ['image','video']){const selected=(kind==='video')===video;$('category-'+kind).setAttribute('aria-selected',String(selected));$('category-'+kind).tabIndex=selected?0:-1;}
+ $('workspace').hidden=video;
  render();
 }
 for(const name of modes){
  $('tab-'+name).addEventListener('click',()=>setMode(name));
- $('tab-'+name).addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const index=modes.indexOf(name);const next=event.key==='Home'?modes[0]:event.key==='End'?modes.at(-1):modes[(index+(event.key==='ArrowRight'?1:modes.length-1))%modes.length];setMode(next);$('tab-'+next).focus();});
+ $('tab-'+name).addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const group=name==='audio'?['audio']:['upscale','crop'];const index=group.indexOf(name);const next=event.key==='Home'?group[0]:event.key==='End'?group.at(-1):group[(index+(event.key==='ArrowRight'?1:group.length-1))%group.length];setMode(next);$('tab-'+next).focus();});
+}
+for(const kind of ['image','video']){
+ $('category-'+kind).addEventListener('click',()=>setMode(kind==='image'?lastImageMode:'audio'));
+ $('category-'+kind).addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const next=event.key==='Home'?'image':event.key==='End'?'video':kind==='image'?'video':'image';setMode(next==='image'?lastImageMode:'audio');$('category-'+next).focus();});
 }
 function status(text,error=false){$('status').textContent=text;$('status').classList.toggle('error',error);}
 function freeResult(item){if(item.result)URL.revokeObjectURL(item.result.url);item.result=null;}
 function freeZip(){if(zipUrl)URL.revokeObjectURL(zipUrl);zipUrl=null;$('download-all').hidden=true;}
 function dispose(){freeZip();items.forEach(item=>{freeResult(item);cropEditor.clearResult(item);URL.revokeObjectURL(item.url);});}
 function syncScaleButtons(){const value=Number($('scale-number').value);$('scale-minus').disabled=busy||loading||cropProcessing||value<=2;$('scale-plus').disabled=busy||loading||cropProcessing||value>=10;}
-function lock(){document.querySelectorAll('.controls input,.controls select,.presets button,.scale-step-button,#replace,#file,#clear,#add,#tab-upscale,#tab-crop,#tab-audio,#crop-reset,#crop-new,#spotify-preset,#twitter-preset,#crop-process,.queue-item').forEach(e=>e.disabled=busy||loading||cropProcessing);$('cancel').hidden=!busy;syncScaleButtons();}
+function lock(){document.querySelectorAll('.controls input,.controls select,.presets button,.scale-step-button,#replace,#file,#clear,#add,#tab-upscale,#tab-crop,#tab-audio,#category-image,#category-video,#crop-reset,#crop-new,#spotify-preset,#twitter-preset,#crop-process,.queue-item').forEach(e=>e.disabled=busy||loading||cropProcessing);$('cancel').hidden=!busy;syncScaleButtons();}
 function renderList(){
  $('queue').replaceChildren();items.forEach((item,index)=>{const b=document.createElement('button');b.type='button';b.className='queue-item';b.disabled=busy||loading||cropProcessing;b.setAttribute('aria-pressed',String(index===active));const name=document.createElement('span'),state=document.createElement('small');name.textContent=item.file.name;state.textContent=item.result?'完成':item.error?'エラー':'待機';b.append(name,state);b.addEventListener('click',()=>{active=index;render();});$('queue').append(b);});$('queue').hidden=items.length<2;$('queue-count').textContent=items.length?`${items.length}枚 / 最大10枚`:'';
 }
