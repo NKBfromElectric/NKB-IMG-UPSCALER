@@ -1,7 +1,7 @@
 import http from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
-const files=['index.html','app.js','crop.js','crop-geometry.js','styles.css','geometry.js','favicon.svg','resize.js','input.js','zip.js','privacy.html','terms.html','robots.txt','sitemap.xml','vendor/pica.mjs','vendor/pica-LICENSE.txt'];
+const files=['index.html','app.js','audio.js','wav.js','wav-worker.js','crop.js','crop-geometry.js','styles.css','geometry.js','favicon.svg','resize.js','input.js','zip.js','privacy.html','terms.html','robots.txt','sitemap.xml','vendor/pica.mjs','vendor/pica-LICENSE.txt'];
 const types={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',mjs:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',svg:'image/svg+xml',txt:'text/plain; charset=utf-8',xml:'application/xml'};
 const headerFile=await readFile(new URL('./public/_headers',import.meta.url),'utf8');
 const headers=Object.fromEntries(headerFile.split(/\r?\n/).filter(line=>line.startsWith('  ')).map(line=>{const i=line.indexOf(':');return [line.slice(0,i).trim(),line.slice(i+1).trim()];}));

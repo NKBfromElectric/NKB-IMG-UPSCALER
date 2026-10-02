@@ -6,6 +6,9 @@ JPG・PNGを2〜10倍（0.1刻み）に拡大する無料のブラウザツー�
 
 ## 機能
 
+- MP4→WAVタブ、端末内でAAC音声をデコード、48/44.1 kHz・16-bit PCM・元チャンネル/モノラル・試聴と保存
+- 音声変換は1ファイル150 MB・10分以内、モノラル/ステレオ。対応コーデックはブラウザー依存
+
 - 拡大・トリミングのタブ切り替え、範囲のドラッグ・四隅の調整・ピクセル指定
 - 自由比率、正方形、縦横の比率プリセット
 - X（Twitter）ヘッダー3:1、1,500 × 500px書き出し（高品質補間）
@@ -29,7 +32,7 @@ JPG・PNGを2〜10倍（0.1刻み）に拡大する無料のブラウザツー�
 
 Node.js 22以降で `npm ci`、`npm run dev`。http://127.0.0.1:4173 を開きます。`npm test` で倍率・トリミング範囲・ファイル検査・ZIP構造を検証します。
 
-Cloudflare Workers静的アセット機能でpublic/だけを配信します。`npx wrangler login` の後 `npm run deploy`。またはpublic/の内容をZIP化し、Workerの「新しいデプロイ」で完全なコンテンツとしてアップロードします。`_headers` を必ず含めてください。
+Cloudflare Workers BuildsでGitHubのmainと接続済み。mainへの更新で依存関係をインストールし、`npm test`が成功した後に`npx wrangler deploy`で自動公開します。本番以外のプレビューは無効です。Cloudflare Workers静的アセット機能でpublic/だけを配信します。`npx wrangler login` の後 `npm run deploy`。またはpublic/の内容をZIP化し、Workerの「新しいデプロイ」で完全なコンテンツとしてアップロードします。`_headers` を必ず含めてください。
 
 公開後はPNG/JPGのダウンロード、比較、ZIP、セキュリティヘッダーを確認します。画像処理ライブラリは同梱しているため外部CDNへの画像送信はありません。
 
