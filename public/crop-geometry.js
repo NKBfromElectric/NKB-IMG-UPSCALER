@@ -19,6 +19,7 @@ export function cropFromPoints(start,end,width,height,ratio=0){
 }
 export function cropRatio(value,width,height){
   if(value==='spotify')return 7/3;
+  if(value==='twitter')return 3;
   if(value==='original')return width/height;
   if(value==='free')return 0;
   const [w,h]=value.split(':').map(Number);return w>0&&h>0?w/h:0;

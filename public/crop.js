@@ -23,6 +23,7 @@ export function createCropEditor({getItem,isLocked,setProcessing}){
     item.crop??=centeredCrop(item.width,item.height);item.cropRatio??='free';
     $('crop-ratio').value=item.cropRatio;
     $('spotify-export').hidden=item.cropRatio!=='spotify';
+    $('twitter-export').hidden=item.cropRatio!=='twitter';
     for(const key of ['x','y','width','height']){$('crop-'+key).value=item.crop[key];$('crop-'+key).max=key==='x'?item.width-1:key==='y'?item.height-1:key==='width'?item.width:item.height;}
     $('crop-size').textContent=`${item.crop.width.toLocaleString()} × ${item.crop.height.toLocaleString()} px`;
     $('crop-status').classList.remove('error');$('crop-status').textContent=drawing?'画像上をドラッグして、新しい範囲を指定してください。':item.cropResult?'完成しました。切り抜いた画像を保存できます。':'枠の内側は移動、四隅はサイズ変更。「範囲を描き直す」で新しく指定できます。';
@@ -54,18 +55,19 @@ export function createCropEditor({getItem,isLocked,setProcessing}){
   $('crop-reset').addEventListener('click',()=>{const item=getItem();drawing=false;if(item)change(centeredCrop(item.width,item.height,ratio(item)));});
   $('crop-new').addEventListener('click',()=>{if(isLocked()||!getItem())return;drawing=true;refresh();});
   $('spotify-preset').addEventListener('click',()=>{if(isLocked())return;$('crop-ratio').value='spotify';$('crop-ratio').dispatchEvent(new Event('change'));});
+  $('twitter-preset').addEventListener('click',()=>{if(isLocked())return;$('crop-ratio').value='twitter';$('crop-ratio').dispatchEvent(new Event('change'));});
   for(const key of ['x','y','width','height'])$('crop-'+key).addEventListener('change',()=>{
     const item=getItem();if(!item)return;const value=Number($('crop-'+key).value);if(!Number.isFinite(value)){refresh();return;}const c={...item.crop,[key]:value},r=ratio(item);
     if(r&&(key==='width'||key==='height')){if(key==='width'){c.width=Math.min(Math.max(1,value),item.width,item.height*r);c.height=c.width/r;}else{c.height=Math.min(Math.max(1,value),item.height,item.width/r);c.width=c.height*r;}}
     change(c);
   });
-  for(const key of ['crop-format','crop-quality','spotify-size'])$(key).addEventListener('change',()=>{const item=getItem();if(item)clearResult(item);$('crop-quality-row').hidden=$('crop-format').value!=='image/jpeg';refresh();});
+  for(const key of ['crop-format','crop-quality','spotify-size','twitter-size'])$(key).addEventListener('change',()=>{const item=getItem();if(item)clearResult(item);$('crop-quality-row').hidden=$('crop-format').value!=='image/jpeg';refresh();});
   $('crop-process').addEventListener('click',async()=>{
-    const item=getItem();if(!item||isLocked()||drawing)return;const rect={...item.crop},format=$('crop-format').value,quality=Math.min(1,Math.max(.5,Number($('crop-quality').value)/100||.98)),spotify=item.cropRatio==='spotify'&&$('spotify-size').checked;
+    const item=getItem();if(!item||isLocked()||drawing)return;const rect={...item.crop},format=$('crop-format').value,quality=Math.min(1,Math.max(.5,Number($('crop-quality').value)/100||.98)),spotify=item.cropRatio==='spotify'&&$('spotify-size').checked,twitter=item.cropRatio==='twitter'&&$('twitter-size').checked;
     setProcessing(true);$('crop-status').textContent='切り抜いた画像を書き出しています…';const image=new Image(),canvas=document.createElement('canvas'),output=document.createElement('canvas');
     try{image.src=item.url;await image.decode();canvas.width=rect.width;canvas.height=rect.height;const ctx=canvas.getContext('2d');if(!ctx)throw new Error('この端末では画像を処理できません。');if(format==='image/jpeg'){ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);}ctx.drawImage(image,rect.x,rect.y,rect.width,rect.height,0,0,rect.width,rect.height);
-      let target=canvas;if(spotify){output.width=2660;output.height=1140;await resizeImage(canvas,output,{jpeg:format==='image/jpeg'});target=output;}
-      const blob=await new Promise(resolve=>target.toBlob(resolve,format,quality));if(!blob||blob.type!==format)throw new Error('書き出しに失敗しました。範囲を小さくしてお試しください。');clearResult(item);const base=item.file.name.replace(/\.[^.]+$/,'').replace(/[\\/\x00-\x1f]/g,'_').slice(0,180);item.cropResult={url:URL.createObjectURL(blob),name:`${base}_${spotify?'spotify':'crop'}_${target.width}x${target.height}.${format==='image/png'?'png':'jpg'}`};setProcessing(false);refresh();$('crop-status').textContent=`完成しました。${target.width.toLocaleString()} × ${target.height.toLocaleString()} px / ${(blob.size/1024/1024).toFixed(2)} MB`;
+      let target=canvas;if(spotify||twitter){output.width=spotify?2660:1500;output.height=spotify?1140:500;await resizeImage(canvas,output,{jpeg:format==='image/jpeg'});target=output;}
+      const blob=await new Promise(resolve=>target.toBlob(resolve,format,quality));if(!blob||blob.type!==format)throw new Error('書き出しに失敗しました。範囲を小さくしてお試しください。');clearResult(item);const base=item.file.name.replace(/\.[^.]+$/,'').replace(/[\\/\x00-\x1f]/g,'_').slice(0,180);item.cropResult={url:URL.createObjectURL(blob),name:`${base}_${spotify?'spotify':twitter?'twitter':'crop'}_${target.width}x${target.height}.${format==='image/png'?'png':'jpg'}`};setProcessing(false);refresh();$('crop-status').textContent=`完成しました。${target.width.toLocaleString()} × ${target.height.toLocaleString()} px / ${(blob.size/1024/1024).toFixed(2)} MB`;
     }catch(error){setProcessing(false);refresh();$('crop-status').textContent=error.message;$('crop-status').classList.add('error');}finally{image.src='';canvas.width=canvas.height=output.width=output.height=0;}
   });
   new ResizeObserver(layout).observe(document.querySelector('.compare-canvas'));

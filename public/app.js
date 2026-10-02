@@ -1,4 +1,4 @@
-import {createCropEditor} from './crop.js?v=20261002-4';
+import {createCropEditor} from './crop.js?v=20261002-5';
 import {dimensions,stepScale} from './geometry.js';
 import {resizeImage} from './resize.js';
 import {inspectImage} from './input.js';
@@ -21,7 +21,7 @@ function freeResult(item){if(item.result)URL.revokeObjectURL(item.result.url);it
 function freeZip(){if(zipUrl)URL.revokeObjectURL(zipUrl);zipUrl=null;$('download-all').hidden=true;}
 function dispose(){freeZip();items.forEach(item=>{freeResult(item);cropEditor.clearResult(item);URL.revokeObjectURL(item.url);});}
 function syncScaleButtons(){const value=Number($('scale-number').value);$('scale-minus').disabled=busy||loading||cropProcessing||value<=2;$('scale-plus').disabled=busy||loading||cropProcessing||value>=10;}
-function lock(){document.querySelectorAll('.controls input,.controls select,.presets button,.scale-step-button,#replace,#file,#clear,#add,#tab-upscale,#tab-crop,#crop-reset,#crop-new,#spotify-preset,#crop-process,.queue-item').forEach(e=>e.disabled=busy||loading||cropProcessing);$('cancel').hidden=!busy;syncScaleButtons();}
+function lock(){document.querySelectorAll('.controls input,.controls select,.presets button,.scale-step-button,#replace,#file,#clear,#add,#tab-upscale,#tab-crop,#crop-reset,#crop-new,#spotify-preset,#twitter-preset,#crop-process,.queue-item').forEach(e=>e.disabled=busy||loading||cropProcessing);$('cancel').hidden=!busy;syncScaleButtons();}
 function renderList(){
  $('queue').replaceChildren();items.forEach((item,index)=>{const b=document.createElement('button');b.type='button';b.className='queue-item';b.disabled=busy||loading||cropProcessing;b.setAttribute('aria-pressed',String(index===active));const name=document.createElement('span'),state=document.createElement('small');name.textContent=item.file.name;state.textContent=item.result?'完成':item.error?'エラー':'待機';b.append(name,state);b.addEventListener('click',()=>{active=index;render();});$('queue').append(b);});$('queue').hidden=items.length<2;$('queue-count').textContent=items.length?`${items.length}枚 / 最大10枚`:'';
 }
